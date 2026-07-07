@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同审查 - 文件上传原型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 24px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            padding: 32px 40px;
+        }
+
+        /* 区块标题 */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .section-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .section-label .required {
+            color: #ff4d4f;
+            margin-right: 2px;
+        }
+
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1.5px solid #bfbfbf;
+            color: #8c8c8c;
+            font-size: 12px;
+            cursor: help;
+            position: relative;
+            font-style: normal;
+        }
+
+        .help-icon .tooltip {
+            display: none;
+            position: absolute;
+            top: 30px;
+            left: 0;
+            background: #434343;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 400;
+            padding: 10px 14px;
+            border-radius: 6px;
+            white-space: nowrap;
+            z-index: 100;
+            line-height: 1.5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .help-icon:hover .tooltip {
+            display: block;
+        }
+
+        .section-desc {
+            font-size: 13px;
+            color: #8c8c8c;
+            margin-left: 4px;
+        }
+
+        .cancel-upload {
+            font-size: 14px;
+            color: #1890ff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+        }
+
+        .cancel-upload:hover {
+            color: #40a9ff;
+        }
+
+        /* 大卡片（初始状态） */
+        .upload-cards {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+
+        .upload-card {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 20px 24px;
+            background: #f5f7fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .upload-card:hover {
+            background: #e8f0fe;
+            border-color: #1890ff;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .card-icon svg { width: 100%; height: 100%; }
+
+        .card-text {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a1a;
+            flex: 1;
+        }
+
+        .card-arrow {
+            color: #bfbfbf;
+            font-size: 18px;
+        }
+
+        /* 小按钮（上传后状态） */
+        .upload-btns {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .upload-small-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 1px solid #1890ff;
+            border-radius: 6px;
+            background: #fff;
+            color: #1890ff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-small-btn:hover {
+            background: #e6f4ff;
+        }
+
+        .upload-small-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 文件列表 */
+        .file-list {
+            margin-top: 0;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: #fafbfc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            background: #f5f7fa;
+        }
+
+        .file-item.uploading {
+            background: #f0f5ff;
+            border-color: #d6e4ff;
+        }
+
+        .file-item-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 14px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-item-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .file-item-info {
+            flex: 1;
+        }
+
+        .file-item-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .file-item-name {
+            font-size: 15px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .source-tag {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .source-tag.document {
+            background: #e6f4ff;
+            color: #1890ff;
+        }
+
+        .source-tag.local {
+            background: #f9f0ff;
+            color: #722ed1;
+        }
+
+        .file-item-meta {
+            font-size: 13px;
+            color: #8c8c8c;
+        }
+
+        .file-item-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .upload-status {
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .status-text {
+            font-size: 13px;
+        }
+
+        .status-text.success { color: #52c41a; }
+        .status-text.uploading { color: #1890ff; }
+
+        .progress-bar {
+            width: 120px;
+            height: 4px;
+            background: #e8e8e8;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1890ff;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #bfbfbf;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #ff4d4f;
+        }
+
+        .delete-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .cancel-upload-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #bfbfbf;
+            font-size: 18px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .cancel-upload-btn:hover {
+            color: #ff4d4f;
+        }
+
+        /* 分隔线 */
+        .divider {
+            height: 1px;
+            background: #f0f0f0;
+            margin: 28px 0;
+        }
+
+        /* 确认审查按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: #2962ff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+            transition: all 0.2s;
+        }
+
+        .submit-btn:hover {
+            background: #1e4bd8;
+        }
+
+        /* 弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 640px;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            animation: modalIn 0.2s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #8c8c8c;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 16px 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            color: #333;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+            border-color: #40a9ff;
+            color: #fff;
+        }
+
+        /* 单据列表 */
+        .doc-list {
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .doc-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.15s;
+        }
+
+        .doc-item:last-child { border-bottom: none; }
+        .doc-item:hover { background: #f5f7fa; }
+        .doc-item.selected { background: #e6f4ff; }
+
+        .doc-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #1890ff;
+            cursor: pointer;
+        }
+
+        .doc-info { flex: 1; }
+
+        .doc-name {
+            font-size: 14px;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+
+        .doc-meta {
+            font-size: 12px;
+            color: #8c8c8c;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .hidden-input { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 主文件 -->
+    <div class="section-header">
+        <div class="section-header-left">
+            <span class="section-label">主文件</span>
+            <i class="help-icon">?
+                <span class="tooltip">可传1个，支持doc、docx、wps、pdf、png、jpg、jpeg、bmp、ofd格式（单个不超过≤100M）</span>
+            </i>
+        </div>
+    </div>
+
+    <!-- 主文件上传区域：大卡片 / 文件列表 切换 -->
+    <div id="mainUploadArea">
+        <div class="upload-cards" id="mainUploadCards">
+            <div class="upload-card" onclick="openMainDocModal()">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <rect x="8" y="6" width="28" height="36" rx="3" fill="#D6E4FF" stroke="#1890FF" stroke-width="1.5"/>
+                        <rect x="12" y="12" width="16" height="2" rx="1" fill="#1890FF"/>
+                        <rect x="12" y="18" width="20" height="2" rx="1" fill="#91CAFF"/>
+                        <rect x="12" y="24" width="18" height="2" rx="1" fill="#91CAFF"/>
+                        <rect x="12" y="30" width="14" height="2" rx="1" fill="#91CAFF"/>
+                        <rect x="18" y="2" width="20" height="28" rx="3" fill="#E6F4FF" stroke="#69B1FF" stroke-width="1.5"/>
+                        <rect x="22" y="8" width="12" height="2" rx="1" fill="#69B1FF"/>
+                        <rect x="22" y="14" width="14" height="2" rx="1" fill="#BADCFF"/>
+                        <rect x="22" y="20" width="10" height="2" rx="1" fill="#BADCFF"/>
+                    </svg>
+                </div>
+                <span class="card-text">选择合同已有单据附件</span>
+                <span class="card-arrow">›</span>
+            </div>
+            <div class="upload-card" onclick="triggerMainLocalUpload()">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <path d="M6 14C6 12.8954 6.89543 12 8 12H18L22 8H40C41.1046 8 42 8.89543 42 10V34C42 35.1046 41.1046 36 40 36H8C6.89543 36 6 35.1046 6 34V14Z" fill="#D6E4FF" stroke="#1890FF" stroke-width="1.5"/>
+                        <rect x="14" y="20" width="20" height="2" rx="1" fill="#1890FF"/>
+                        <rect x="14" y="26" width="14" height="2" rx="1" fill="#91CAFF"/>
+                    </svg>
+                </div>
+                <span class="card-text">选择本地文件</span>
+                <span class="card-arrow">›</span>
+            </div>
+        </div>
+        <div class="file-list" id="mainFileList"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 相关附件 -->
+    <div class="section-header">
+        <div class="section-header-left">
+            <span class="section-label">相关附件</span>
+            <i class="help-icon">?
+                <span class="tooltip">补充细化约定的配套材料，清单、图纸、技术规范等均属此类，法律效力与主合同一致。</span>
+            </i>
+            <span class="section-desc">可传多个，支持doc、docx、wps、pdf、png、jpg、jpeg、bmp、ofd格式（单个不超过≤100M）</span>
+        </div>
+        <button class="cancel-upload" id="cancelAttachBtn" onclick="cancelAttachments()" style="display:none;">
+            ✕ 取消上传附件
+        </button>
+    </div>
+
+    <!-- 相关附件上传区域 -->
+    <div id="attachUploadArea">
+        <!-- 大卡片（无文件时） -->
+        <div class="upload-cards" id="attachUploadCards">
+            <div class="upload-card" id="attachBigDocBtn" onclick="openAttachDocModal()">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <rect x="8" y="6" width="28" height="36" rx="3" fill="#D6E4FF" stroke="#1890FF" stroke-width="1.5"/>
+                        <rect x="12" y="12" width="16" height="2" rx="1" fill="#1890FF"/>
+                        <rect x="12" y="18" width="20" height="2" rx="1" fill="#91CAFF"/>
+                        <rect x="12" y="24" width="18" height="2" rx="1" fill="#91CAFF"/>
+                        <rect x="12" y="30" width="14" height="2" rx="1" fill="#91CAFF"/>
+                        <rect x="18" y="2" width="20" height="28" rx="3" fill="#E6F4FF" stroke="#69B1FF" stroke-width="1.5"/>
+                        <rect x="22" y="8" width="12" height="2" rx="1" fill="#69B1FF"/>
+                        <rect x="22" y="14" width="14" height="2" rx="1" fill="#BADCFF"/>
+                        <rect x="22" y="20" width="10" height="2" rx="1" fill="#BADCFF"/>
+                    </svg>
+                </div>
+                <span class="card-text">选择合同已有单据附件</span>
+                <span class="card-arrow">›</span>
+            </div>
+            <div class="upload-card" id="attachBigLocalBtn" onclick="triggerAttachLocalUpload()">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none">
+                        <path d="M6 14C6 12.8954 6.89543 12 8 12H18L22 8H40C41.1046 8 42 8.89543 42 10V34C42 35.1046 41.1046 36 40 36H8C6.89543 36 6 35.1046 6 34V14Z" fill="#D6E4FF" stroke="#1890FF" stroke-width="1.5"/>
+                        <rect x="14" y="20" width="20" height="2" rx="1" fill="#1890FF"/>
+                        <rect x="14" y="26" width="14" height="2" rx="1" fill="#91CAFF"/>
+                    </svg>
+                </div>
+                <span class="card-text">选择本地文件</span>
+                <span class="card-arrow">›</span>
+            </div>
+        </div>
+        <!-- 小按钮（有文件时） -->
+        <div class="upload-btns" id="attachUploadBtns" style="display:none;">
+            <button class="upload-small-btn" id="attachSmallDocBtn" onclick="openAttachDocModal()">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M4 2h6l2 2v8a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.2"/><path d="M6 6h4M6 9h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                选择合同已有单据附件
+            </button>
+            <button class="upload-small-btn" id="attachSmallLocalBtn" onclick="triggerAttachLocalUpload()">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M2 4a1 1 0 011-1h3l1.5 1.5H13a1 1 0 011 1V12a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="currentColor" stroke-width="1.2"/></svg>
+                选择本地文件
+            </button>
+        </div>
+        <div class="file-list" id="attachFileList"></div>
+    </div>
+
+    <button class="submit-btn" onclick="confirmReview()">
+        <span>✦</span> 确认审查
+    </button>
+</div>
+
+<!-- 主文件 - 选择单据附件弹窗 -->
+<div class="modal-overlay" id="mainDocModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">选择合同已有单据附件</span>
+            <button class="modal-close" onclick="closeModal('mainDocModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="doc-list" id="mainDocList">
+                <div class="doc-item" onclick="toggleDocSelect(this, 'main')">
+                    <input type="checkbox" class="doc-checkbox" data-name="2026全年账单.xlsx">
+                    <div class="doc-info">
+                        <div class="doc-name">2026全年账单.xlsx</div>
+                        <div class="doc-meta">458 KB · 2026-07-01 上传</div>
+                    </div>
+                </div>
+                <div class="doc-item" onclick="toggleDocSelect(this, 'main')">
+                    <input type="checkbox" class="doc-checkbox" data-name="采购订单-2024-001.pdf">
+                    <div class="doc-info">
+                        <div class="doc-name">采购订单-2024-001.pdf</div>
+                        <div class="doc-meta">2.3 MB · 2024-01-15 上传</div>
+                    </div>
+                </div>
+                <div class="doc-item" onclick="toggleDocSelect(this, 'main')">
+                    <input type="checkbox" class="doc-checkbox" data-name="供应商资质证明.docx">
+                    <div class="doc-info">
+                        <div class="doc-name">供应商资质证明.docx</div>
+                        <div class="doc-meta">1.8 MB · 2024-01-10 上传</div>
+                    </div>
+                </div>
+                <div class="doc-item" onclick="toggleDocSelect(this, 'main')">
+                    <input type="checkbox" class="doc-checkbox" data-name="技术方案说明书.pdf">
+                    <div class="doc-info">
+                        <div class="doc-name">技术方案说明书.pdf</div>
+                        <div class="doc-meta">5.2 MB · 2024-01-08 上传</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('mainDocModal')">取消</button>
+            <button class="btn btn-primary" onclick="confirmMainDocSelect()">确定</button>
+        </div>
+    </div>
+</div>
+
+<!-- 相关附件 - 选择单据附件弹窗 -->
+<div class="modal-overlay" id="attachDocModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">选择合同已有单据附件</span>
+            <button class="modal-close" onclick="closeModal('attachDocModal')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="doc-list" id="attachDocList">
+                <div class="doc-item" onclick="toggleDocSelect(this, 'attach')">
+                    <input type="checkbox" class="doc-checkbox" data-name="2026全年账单.xlsx">
+                    <div class="doc-info">
+                        <div class="doc-name">2026全年账单.xlsx</div>
+                        <div class="doc-meta">458 KB · 2026-07-01 上传</div>
+                    </div>
+                </div>
+                <div class="doc-item" onclick="toggleDocSelect(this, 'attach')">
+                    <input type="checkbox" class="doc-checkbox" data-name="采购订单-2024-001.pdf">
+                    <div class="doc-info">
+                        <div class="doc-name">采购订单-2024-001.pdf</div>
+                        <div class="doc-meta">2.3 MB · 2024-01-15 上传</div>
+                    </div>
+                </div>
+                <div class="doc-item" onclick="toggleDocSelect(this, 'attach')">
+                    <input type="checkbox" class="doc-checkbox" data-name="供应商资质证明.docx">
+                    <div class="doc-info">
+                        <div class="doc-name">供应商资质证明.docx</div>
+                        <div class="doc-meta">1.8 MB · 2024-01-10 上传</div>
+                    </div>
+                </div>
+                <div class="doc-item" onclick="toggleDocSelect(this, 'attach')">
+                    <input type="checkbox" class="doc-checkbox" data-name="技术方案说明书.pdf">
+                    <div class="doc-info">
+                        <div class="doc-name">技术方案说明书.pdf</div>
+                        <div class="doc-meta">5.2 MB · 2024-01-08 上传</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('attachDocModal')">取消</button>
+            <button class="btn btn-primary" onclick="confirmAttachDocSelect()">确定</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+    <span>⚠️</span>
+    <span id="toastMsg"></span>
+</div>
+
+<!-- 隐藏文件输入 -->
+<input type="file" class="hidden-input" id="mainLocalInput" accept=".doc,.docx,.wps,.pdf,.png,.jpg,.jpeg,.bmp,.ofd,.xlsx,.xls" onchange="handleMainLocalFile(event)">
+<input type="file" class="hidden-input" id="attachLocalInput" accept=".doc,.docx,.wps,.pdf,.png,.jpg,.jpeg,.bmp,.ofd,.xlsx,.xls" onchange="handleAttachLocalFile(event)">
+
+<script>
+    let mainFile = null;
+    let attachFiles = [];
+    let uploadTimers = {};
+
+    const VALID_EXTS = ['.doc','.docx','.wps','.pdf','.png','.jpg','.jpeg','.bmp','.ofd','.xlsx','.xls'];
+    const MAX_SIZE = 100 * 1024 * 1024;
+
+    // ===== 文件图标 SVG =====
+    function getFileIcon(name) {
+        const ext = name.split('.').pop().toLowerCase();
+        const colorMap = {
+            xlsx: '#0F9D58', xls: '#0F9D58',
+            doc: '#2B579A', docx: '#2B579A', wps: '#2B579A',
+            pdf: '#EA4335',
+            png: '#FF6D00', jpg: '#FF6D00', jpeg: '#FF6D00', bmp: '#FF6D00',
+            ofd: '#7B1FA2'
+        };
+        const letterMap = {
+            xlsx: 'E', xls: 'E',
+            doc: 'W', docx: 'W', wps: 'W',
+            pdf: 'P',
+            png: 'I', jpg: 'I', jpeg: 'I', bmp: 'I',
+            ofd: 'O'
+        };
+        const c = colorMap[ext] || '#1890ff';
+        const l = letterMap[ext] || 'F';
+        return `<svg viewBox="0 0 36 36" fill="none">
+            <rect x="2" y="2" width="24" height="32" rx="3" fill="#E8F5E9" stroke="${c}" stroke-width="1.2"/>
+            <rect x="6" y="8" width="12" height="2" rx="1" fill="${c}" opacity="0.6"/>
+            <rect x="6" y="13" width="16" height="2" rx="1" fill="${c}" opacity="0.4"/>
+            <rect x="6" y="18" width="14" height="2" rx="1" fill="${c}" opacity="0.4"/>
+            <rect x="6" y="23" width="10" height="2" rx="1" fill="${c}" opacity="0.4"/>
+            <text x="14" y="22" text-anchor="middle" font-size="11" font-weight="bold" fill="${c}">${l}</text>
+        </svg>`;
+    }
+
+    // ===== 主文件 - 本地上传 =====
+    function triggerMainLocalUpload() {
+        if (mainFile) { showToast('主文件已上传，仅支持上传 1 个主文件'); return; }
+        document.getElementById('mainLocalInput').click();
+    }
+
+    function handleMainLocalFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!validateFile(file)) return;
+        mainFile = { name: file.name, size: file.size, source: 'local', status: 'uploading', progress: 0 };
+        renderMainFile();
+        simulateUpload('main', 0);
+        e.target.value = '';
+    }
+
+    // ===== 主文件 - 单据附件 =====
+    function openMainDocModal() {
+        if (mainFile) { showToast('主文件已上传，仅支持上传 1 个主文件'); return; }
+        resetModalCheckboxes('mainDocList');
+        document.getElementById('mainDocModal').classList.add('active');
+    }
+
+    function confirmMainDocSelect() {
+        const checked = document.querySelectorAll('#mainDocList .doc-checkbox:checked');
+        if (checked.length === 0) { closeModal('mainDocModal'); return; }
+        if (mainFile) { showToast('主文件已上传，仅支持上传 1 个主文件'); return; }
+        const name = checked[0].dataset.name;
+        const size = 458 * 1024;
+        mainFile = { name, size, source: 'document', status: 'success', progress: 100 };
+        renderMainFile();
+        closeModal('mainDocModal');
+    }
+
+    // ===== 相关附件 - 本地上传 =====
+    function triggerAttachLocalUpload() {
+        if (attachFiles.length >= 2) { showToast('仅支持上传2个相关附件'); return; }
+        document.getElementById('attachLocalInput').click();
+    }
+
+    function handleAttachLocalFile(e) {
+        const files = Array.from(e.target.files);
+        for (const file of files) {
+            if (attachFiles.length >= 2) { showToast('仅支持上传2个相关附件'); break; }
+            if (!validateFile(file)) continue;
+            const idx = attachFiles.length;
+            attachFiles.push({ name: file.name, size: file.size, source: 'local', status: 'uploading', progress: 0 });
+            renderAttachFiles();
+            simulateUpload('attach', idx);
+        }
+        e.target.value = '';
+    }
+
+    // ===== 相关附件 - 单据附件 =====
+    function openAttachDocModal() {
+        if (attachFiles.length >= 2) { showToast('仅支持上传2个相关附件'); return; }
+        resetModalCheckboxes('attachDocList');
+        document.getElementById('attachDocModal').classList.add('active');
+    }
+
+    function confirmAttachDocSelect() {
+        const checked = document.querySelectorAll('#attachDocList .doc-checkbox:checked');
+        for (const cb of checked) {
+            if (attachFiles.length >= 2) { showToast('仅支持上传2个相关附件'); break; }
+            attachFiles.push({ name: cb.dataset.name, size: 458 * 1024, source: 'document', status: 'success', progress: 100 });
+        }
+        renderAttachFiles();
+        closeModal('attachDocModal');
+    }
+
+    // ===== 模拟上传进度 =====
+    function simulateUpload(type, idx) {
+        const key = type + '_' + idx;
+        let progress = 0;
+        uploadTimers[key] = setInterval(() => {
+            progress += Math.random() * 15 + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(uploadTimers[key]);
+                if (type === 'main') {
+                    mainFile.status = 'success';
+                    mainFile.progress = 100;
+                    renderMainFile();
+                } else {
+                    attachFiles[idx].status = 'success';
+                    attachFiles[idx].progress = 100;
+                    renderAttachFiles();
+                }
+            } else {
+                if (type === 'main') {
+                    mainFile.progress = Math.round(progress);
+                    updateMainProgress();
+                } else {
+                    attachFiles[idx].progress = Math.round(progress);
+                    updateAttachProgress(idx);
+                }
+            }
+        }, 300);
+    }
+
+    function updateMainProgress() {
+        const el = document.getElementById('mainProgressFill');
+        const text = document.getElementById('mainProgressText');
+        if (el) el.style.width = mainFile.progress + '%';
+        if (text) text.textContent = '上传中 (' + mainFile.progress + '%)';
+    }
+
+    function updateAttachProgress(idx) {
+        const el = document.getElementById('attachProgressFill_' + idx);
+        const text = document.getElementById('attachProgressText_' + idx);
+        if (el) el.style.width = attachFiles[idx].progress + '%';
+        if (text) text.textContent = '上传中 (' + attachFiles[idx].progress + '%)';
+    }
+
+    // ===== 弹窗勾选 =====
+    function toggleDocSelect(el, type) {
+        const cb = el.querySelector('.doc-checkbox');
+        const listId = type === 'main' ? 'mainDocList' : 'attachDocList';
+        const limit = type === 'main' ? 1 : 2;
+        const currentChecked = document.querySelectorAll(`#${listId} .doc-checkbox:checked`).length;
+        if (!cb.checked && currentChecked >= limit) {
+            showToast(type === 'main' ? '主文件仅支持上传 1 个' : '仅支持上传2个相关附件');
+            return;
+        }
+        cb.checked = !cb.checked;
+        el.classList.toggle('selected', cb.checked);
+    }
+
+    // ===== 渲染主文件 =====
+    function renderMainFile() {
+        const cards = document.getElementById('mainUploadCards');
+        const list = document.getElementById('mainFileList');
+        if (mainFile) {
+            cards.style.display = 'none';
+            const isUploading = mainFile.status === 'uploading';
+            list.innerHTML = `
+                <div class="file-item ${isUploading ? 'uploading' : ''}">
+                    <div class="file-item-icon">${getFileIcon(mainFile.name)}</div>
+                    <div class="file-item-info">
+                        <div class="file-item-name-row">
+                            <span class="file-item-name">${mainFile.name}</span>
+                            <span class="source-tag ${mainFile.source}">${mainFile.source === 'document' ? '单据' : '本地'}</span>
+                        </div>
+                        <div class="file-item-meta">${getExt(mainFile.name).toUpperCase()}·${formatSize(mainFile.size)}</div>
+                    </div>
+                    <div class="file-item-right">
+                        ${isUploading ? `
+                            <div class="upload-status">
+                                <span class="status-text uploading" id="mainProgressText">上传中 (${mainFile.progress}%)</span>
+                                <div class="progress-bar"><div class="progress-fill" id="mainProgressFill" style="width:${mainFile.progress}%"></div></div>
+                            </div>
+                            <button class="cancel-upload-btn" onclick="cancelMainUpload()">✕</button>
+                        ` : `
+                            <button class="delete-btn" onclick="removeMainFile()">
+                                <svg viewBox="0 0 20 20" fill="none"><path d="M4 5h12M7 5V4a1 1 0 011-1h4a1 1 0 011 1v1M6 5v11a2 2 0 002 2h4a2 2 0 002-2V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            </button>
+                        `}
+                    </div>
+                </div>`;
+        } else {
+            cards.style.display = 'flex';
+            list.innerHTML = '';
+        }
+    }
+
+    // ===== 渲染相关附件 =====
+    function renderAttachFiles() {
+        const cards = document.getElementById('attachUploadCards');
+        const btns = document.getElementById('attachUploadBtns');
+        const list = document.getElementById('attachFileList');
+        const cancelBtn = document.getElementById('cancelAttachBtn');
+
+        if (attachFiles.length === 0) {
+            cards.style.display = 'flex';
+            btns.style.display = 'none';
+            list.innerHTML = '';
+            cancelBtn.style.display = 'none';
+            return;
+        }
+
+        cards.style.display = 'none';
+        btns.style.display = 'flex';
+        cancelBtn.style.display = 'flex';
+
+        // 小按钮始终可点击，满2个时点击会弹 Toast 提示
+
+        list.innerHTML = attachFiles.map((f, i) => {
+            const isUploading = f.status === 'uploading';
+            return `
+                <div class="file-item ${isUploading ? 'uploading' : ''}">
+                    <div class="file-item-icon">${getFileIcon(f.name)}</div>
+                    <div class="file-item-info">
+                        <div class="file-item-name-row">
+                            <span class="file-item-name">${f.name}</span>
+                            <span class="source-tag ${f.source}">${f.source === 'document' ? '单据' : '本地'}</span>
+                        </div>
+                        <div class="file-item-meta">${getExt(f.name).toUpperCase()}·${formatSize(f.size)}</div>
+                    </div>
+                    <div class="file-item-right">
+                        ${isUploading ? `
+                            <div class="upload-status">
+                                <span class="status-text uploading" id="attachProgressText_${i}">上传中 (${f.progress}%)</span>
+                                <div class="progress-bar"><div class="progress-fill" id="attachProgressFill_${i}" style="width:${f.progress}%"></div></div>
+                            </div>
+                            <button class="cancel-upload-btn" onclick="cancelAttachUpload(${i})">✕</button>
+                        ` : `
+                            <span class="status-text success">上传完成</span>
+                            <button class="delete-btn" onclick="removeAttachFile(${i})">
+                                <svg viewBox="0 0 20 20" fill="none"><path d="M4 5h12M7 5V4a1 1 0 011-1h4a1 1 0 011 1v1M6 5v11a2 2 0 002 2h4a2 2 0 002-2V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                            </button>
+                        `}
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // ===== 操作 =====
+    function removeMainFile() {
+        mainFile = null;
+        renderMainFile();
+    }
+
+    function cancelMainUpload() {
+        const key = 'main_0';
+        if (uploadTimers[key]) clearInterval(uploadTimers[key]);
+        mainFile = null;
+        renderMainFile();
+    }
+
+    function removeAttachFile(index) {
+        const key = 'attach_' + index;
+        if (uploadTimers[key]) clearInterval(uploadTimers[key]);
+        attachFiles.splice(index, 1);
+        renderAttachFiles();
+    }
+
+    function cancelAttachUpload(index) {
+        const key = 'attach_' + index;
+        if (uploadTimers[key]) clearInterval(uploadTimers[key]);
+        attachFiles.splice(index, 1);
+        renderAttachFiles();
+    }
+
+    function cancelAttachments() {
+        Object.values(uploadTimers).forEach(t => clearInterval(t));
+        uploadTimers = {};
+        attachFiles = [];
+        renderAttachFiles();
+    }
+
+    function confirmReview() {
+        if (!mainFile) { showToast('请先上传主文件'); return; }
+        if (mainFile.status === 'uploading') { showToast('主文件正在上传中，请等待'); return; }
+        showToast('确认审查成功！');
+    }
+
+    // ===== 工具 =====
+    function getExt(name) {
+        return name.split('.').pop().toLowerCase();
+    }
+
+    function validateFile(file) {
+        const ext = '.' + getExt(file.name);
+        if (!VALID_EXTS.includes(ext)) {
+            showToast('不支持的文件格式');
+            return false;
+        }
+        if (file.size > MAX_SIZE) {
+            showToast('文件大小不能超过 100MB');
+            return false;
+        }
+        return true;
+    }
+
+    function formatSize(bytes) {
+        if (!bytes) return '';
+        const k = 1024;
+        const sizes = ['B','KB','MB','GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (bytes / Math.pow(k, i)).toFixed(0) + sizes[i];
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    function resetModalCheckboxes(listId) {
+        document.querySelectorAll(`#${listId} .doc-checkbox`).forEach(cb => {
+            cb.checked = false;
+            cb.closest('.doc-item').classList.remove('selected');
+        });
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+    });
+</script>
+
+</body>
+</html>
